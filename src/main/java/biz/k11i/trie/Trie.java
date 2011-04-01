@@ -86,5 +86,5 @@ public interface Trie {
      *            Ú“ª«
      * @return
      */
-    Iterable<String> searchByPrefix(String prefix);
+    Iterable<String> searchPredictive(String prefix);
 }

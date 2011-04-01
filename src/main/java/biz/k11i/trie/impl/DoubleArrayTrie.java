@@ -2,8 +2,10 @@ package biz.k11i.trie.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 
 import biz.k11i.trie.Trie;
@@ -155,7 +157,7 @@ public class DoubleArrayTrie implements Trie {
                         "'index' must be 0 <= 'index ' < %d: %d", check.size(),
                         index));
             }
-            
+
             int nextIndex = base.get(index) + code;
             if (!isIndexInRange(nextIndex)) {
                 return -1; // TODO マジックナンバーの置き換えと、説明
@@ -164,30 +166,30 @@ public class DoubleArrayTrie implements Trie {
             if (check.get(nextIndex) != index) {
                 return -1;
             }
-            
+
             return nextIndex;
         }
-        
+
         private boolean isIndexInRange(int index) {
             if (0 <= index && index < check.size()) {
                 return true;
             }
-            
+
             return false;
         }
 
         boolean hasTerminationCode(int currentIndex) {
             int nextIndex = retrieve(currentIndex, TERMINATION_CODE);
-            if (nextIndex>= 0) {
+            if (nextIndex >= 0) {
                 return true;
             }
-            
+
             return false;
         }
     }
 
     /**
-     * パターン配列上の区間を表現します。
+     * 構築処理の入力データであるパターン配列における区間を表現します。
      * 
      * @author komiya
      */
@@ -524,9 +526,106 @@ public class DoubleArrayTrie implements Trie {
     }
 
     @Override
-    public Iterable<String> searchByPrefix(String prefix) {
+    public Iterable<String> searchPredictive(String prefix) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    private abstract class IterableImpl implements Iterable<String> {
+        private String pattern;
+
+        IterableImpl(String pattern) {
+            this.pattern = pattern;
+        }
+
+        @Override
+        public Iterator<String> iterator() {
+            return createIterator(DoubleArrayTrie.this, pattern);
+        }
+
+        abstract Iterator<String> createIterator(DoubleArrayTrie trie,
+                String pattern);
+    }
+
+    private static class CommonPrefixSearcher implements Iterator<String> {
+
+        private String pattern;
+
+        private int currentIndex;
+
+        private DoubleArray doubleArray;
+
+        private char[] charTable;
+
+        private String nextObject;
+
+        CommonPrefixSearcher(String pattern, DoubleArray doubleArray,
+                char[] codeTable) {
+            this.pattern = pattern;
+            this.doubleArray = doubleArray;
+
+            this.charTable = new char[65536];
+            
+            for (int i = 0 ; i < codeTable.length; i++) {
+                charTable[codeTable[i]] = (char)i;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (nextObject != null) {
+                return true;
+            }
+
+            // TODO 次の共通接頭辞を探し出す
+            while (currentIndex < pattern.length() && nextObject != null) {
+
+                // コードから文字に逆変換する
+                char code = charTable[pattern.charAt(currentIndex)];
+                // TODO このあたりの実装が適当。なので、後で見直すこと
+                currentIndex++;
+                if (doubleArray.hasTerminationCode(code)) {
+                    nextObject = pattern.substring(0, currentIndex);
+                    return true;
+
+                } else {
+                    // 繰り返す
+                    // TODO どこで retrieve を呼べばいいのか、確認する
+                }
+            }
+            
+            return false;
+            /*
+             * if (currentIndex >= pattern.length()) { return false; }
+             * 
+             * // コードから文字に逆変換する char ch =
+             * charTable[pattern.charAt(currentIndex)]; if (ch == '\uffff') {
+             * currentIndex = pattern.length(); return false; }
+             * 
+             * // TODO このあたりの実装が適当。なので、後で見直すこと currentIndex++; if
+             * (doubleArray.hasTerminationCode(ch)) { nextObject =
+             * pattern.substring(0, currentIndex); return true; } else { // 繰り返す
+             * }
+             */
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            String result = nextObject;
+            nextObject = null;
+
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            // TODO Auto-generated method stub
+
+        }
+
+    }
 }

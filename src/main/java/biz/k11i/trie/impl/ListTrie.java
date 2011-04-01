@@ -9,6 +9,11 @@ import java.util.NoSuchElementException;
 
 import biz.k11i.trie.Trie;
 
+/**
+ * 連結リストによる単純な Trie の実装です。
+ * 
+ * @author komiya
+ */
 public class ListTrie implements Trie {
     static class TrieNode {
         /** 文字列終端を表すノードです */
@@ -275,7 +280,7 @@ public class ListTrie implements Trie {
     }
 
     @Override
-    public Iterable<String> searchByPrefix(String prefix) {
+    public Iterable<String> searchPredictive(String prefix) {
         throw new UnsupportedOperationException(
                 "This method is not implemented.");
     }
