@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.Stack;
 
 import biz.k11i.trie.Trie;
 
@@ -113,6 +114,10 @@ public class ListTrie implements Trie {
 
             return true;
         }
+        
+        Iterator<TrieNode> iterateChildren() {
+            return children.iterator();
+        }
     }
 
     /** この Trie におけるルートノード */
@@ -151,21 +156,23 @@ public class ListTrie implements Trie {
 
     @Override
     public boolean contains(String pattern) {
-        TrieNode current = root;
-
-        for (int i = 0; i < pattern.length(); i++) {
-            char ch = pattern.charAt(i);
-            current = current.getOrCreateChild(ch);
-            if (current == null) {
-                return false;
-            }
-        }
-
-        if (current.hasTermination()) {
+        TrieNode exactMatchNode = findExactMatch(root, pattern);
+        if (exactMatchNode.hasTermination()) {
             return true;
         }
 
         return false;
+    }
+
+    private static TrieNode findExactMatch(TrieNode root, String pattern) {
+        TrieNode current = root;
+
+        for (int i = 0; i < pattern.length() && current != null; i++) {
+            char ch = pattern.charAt(i);
+            current = current.getOrCreateChild(ch);
+        }
+
+        return current;
     }
 
     @Override
@@ -230,7 +237,7 @@ public class ListTrie implements Trie {
         /** 次の next() メソッドの呼び出しで返却すべきオブジェクト */
         private String nextObject;
 
-        public SearchPrefixOfIterator(TrieNode root, CharSequence text) {
+        SearchPrefixOfIterator(TrieNode root, CharSequence text) {
             this.current = root;
             this.text = text;
         }
@@ -283,5 +290,82 @@ public class ListTrie implements Trie {
     public Iterable<String> searchPredictive(String prefix) {
         throw new UnsupportedOperationException(
                 "This method is not implemented.");
+    }
+
+    private static class PredictiveSearcher implements Iterator<String> {
+        private TrieNode root;
+
+        private String pattern;
+
+        private boolean prepared;
+
+        private Stack<Iterator<TrieNode>> nodes;
+
+        private String nextObject;
+
+        PredictiveSearcher(TrieNode root, String pattern) {
+            this.root = root;
+            this.pattern = pattern;
+        }
+
+        /**
+         * 候補探索を始めるための準備を行います。
+         */
+        private void prepare() {
+            if (!prepared) {
+                return;
+            }
+
+            prepared = true;
+            nodes = new Stack<Iterator<TrieNode>>();
+            
+            TrieNode node = findExactMatch(root, pattern);
+            if (node == null) {
+                return;
+            }
+
+            nodes.push(node.iterateChildren());
+        }
+        
+        @Override
+        public boolean hasNext() {
+            // TODO ここの実装は不完全
+            if (nextObject != null) {
+                return true;
+            }
+
+            if (nodes.isEmpty()) {
+                return false;
+            }
+            
+            
+            Iterator<TrieNode> iter = null;
+            do {
+                iter = nodes.pop();
+            } while (!iter.hasNext() && !nodes.isEmpty());
+            
+            
+            
+            return false;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            
+            String result = nextObject;
+            nextObject = null;
+            
+            return nextObject;
+        }
+
+        @Override
+        public void remove() {
+            // TODO Auto-generated method stub
+
+        }
+
     }
 }
