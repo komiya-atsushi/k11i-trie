@@ -151,6 +151,13 @@ public class DoubleArrayTrie implements Trie {
             }
         }
 
+        /**
+         * 指定された Double Array 上のインデクスより、code に対応する枝をたどります。
+         * 
+         * @param index
+         * @param code
+         * @return code に対応する枝が存在しない場合は、負数が返却されます。
+         */
         int retrieve(int index, char code) {
             if (!isIndexInRange(index)) {
                 throw new IllegalArgumentException(String.format(
@@ -170,6 +177,12 @@ public class DoubleArrayTrie implements Trie {
             return nextIndex;
         }
 
+        /**
+         * 指定されたインデクスが Double Array の範囲内に収まっている場合に、true を返却します。
+         * 
+         * @param index
+         * @return
+         */
         private boolean isIndexInRange(int index) {
             if (0 <= index && index < check.size()) {
                 return true;
@@ -178,8 +191,14 @@ public class DoubleArrayTrie implements Trie {
             return false;
         }
 
-        boolean hasTerminationCode(int currentIndex) {
-            int nextIndex = retrieve(currentIndex, TERMINATION_CODE);
+        /**
+         * 指定された Double Array 上のインデクスから、終端文字への枝が伸びている場合に true を返却します。
+         * 
+         * @param index
+         * @return
+         */
+        boolean hasTerminationCode(int index) {
+            int nextIndex = retrieve(index, TERMINATION_CODE);
             if (nextIndex >= 0) {
                 return true;
             }
@@ -555,6 +574,11 @@ public class DoubleArrayTrie implements Trie {
                 String pattern);
     }
 
+    /**
+     * 共通接頭辞を検索・列挙する機能を提供します。
+     * 
+     * @author komiya
+     */
     private static class CommonPrefixSearcher implements Iterator<String> {
         /** 探索対象文字列 */
         private String pattern;
@@ -601,7 +625,7 @@ public class DoubleArrayTrie implements Trie {
                     prepareFinish();
                     break;
                 }
-                
+
                 patternIndex++;
                 if (doubleArray.hasTerminationCode(doubleArrayIndex)) {
                     nextObject = pattern.substring(0, patternIndex);
@@ -611,7 +635,7 @@ public class DoubleArrayTrie implements Trie {
 
             return false;
         }
-        
+
         private void prepareFinish() {
             patternIndex = pattern.length();
         }
