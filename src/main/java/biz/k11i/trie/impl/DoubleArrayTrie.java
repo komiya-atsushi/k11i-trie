@@ -358,11 +358,13 @@ public class DoubleArrayTrie implements Trie {
         }
     }
 
-    private static final char TERMINATION_CODE = 0;
+    /** 終端を表す Double Array 内での文字表現です */
+    private static final char TERMINATION_CODE = '\u0000';
 
     /** Double-Array を保持します */
     private DoubleArray doubleArray = new DoubleArray();
 
+    /** UTF-16 文字から Double Array 内部における文字表現（コード）へ変換するためのテーブル */
     private char[] codeTable;
 
     @Override
@@ -396,6 +398,7 @@ public class DoubleArrayTrie implements Trie {
      * @return
      */
     private char[] buildCharToCodeTable(Iterable<String> patterns) {
+        // TODO いずれはこの処理で、頻度順に並び替えるようにする (int[])
         char[] result = new char[Character.MAX_VALUE + 1];
 
         for (String pat : patterns) {
@@ -521,8 +524,13 @@ public class DoubleArrayTrie implements Trie {
 
     @Override
     public Iterable<String> searchPrefixOf(String text) {
-        // TODO Auto-generated method stub
-        return null;
+        return new AbstractIterable(text) {
+
+            @Override
+            Iterator<String> createIterator(DoubleArrayTrie trie, String pattern) {
+                return new CommonPrefixSearcher(pattern, doubleArray, codeTable);
+            }
+        };
     }
 
     @Override
@@ -531,10 +539,10 @@ public class DoubleArrayTrie implements Trie {
         return null;
     }
 
-    private abstract class IterableImpl implements Iterable<String> {
+    private abstract class AbstractIterable implements Iterable<String> {
         private String pattern;
 
-        IterableImpl(String pattern) {
+        AbstractIterable(String pattern) {
             this.pattern = pattern;
         }
 
@@ -548,14 +556,19 @@ public class DoubleArrayTrie implements Trie {
     }
 
     private static class CommonPrefixSearcher implements Iterator<String> {
-
+        /** 探索対象文字列 */
         private String pattern;
 
-        private int currentIndex;
+        /** 探索対象文字列の操作位置 */
+        private int patternIndex;
 
+        /** Double Array で表現されたトライ */
         private DoubleArray doubleArray;
 
-        private char[] charTable;
+        private int doubleArrayIndex;
+
+        /** Trie 内での文字表現（コード）から UTF-16 文字に変換するためのテーブル */
+        private char[] codeTable;
 
         private String nextObject;
 
@@ -563,12 +576,7 @@ public class DoubleArrayTrie implements Trie {
                 char[] codeTable) {
             this.pattern = pattern;
             this.doubleArray = doubleArray;
-
-            this.charTable = new char[65536];
-            
-            for (int i = 0 ; i < codeTable.length; i++) {
-                charTable[codeTable[i]] = (char)i;
-            }
+            this.codeTable = codeTable;
         }
 
         @Override
@@ -577,36 +585,35 @@ public class DoubleArrayTrie implements Trie {
                 return true;
             }
 
-            // TODO 次の共通接頭辞を探し出す
-            while (currentIndex < pattern.length() && nextObject != null) {
+            while (patternIndex < pattern.length()) {
 
-                // コードから文字に逆変換する
-                char code = charTable[pattern.charAt(currentIndex)];
-                // TODO このあたりの実装が適当。なので、後で見直すこと
-                currentIndex++;
-                if (doubleArray.hasTerminationCode(code)) {
-                    nextObject = pattern.substring(0, currentIndex);
+                // 文字に対応する Trie 内コードに変換する
+                char code = codeTable[pattern.charAt(patternIndex)];
+                if (code == Character.MAX_VALUE) {
+                    // TODO Character.MAX_VALUE を別の定数に置き換えたい。
+                    prepareFinish();
+                    break;
+                }
+
+                // Double Array の走査位置を更新する
+                doubleArrayIndex = doubleArray.retrieve(doubleArrayIndex, code);
+                if (doubleArrayIndex < 0) {
+                    prepareFinish();
+                    break;
+                }
+                
+                patternIndex++;
+                if (doubleArray.hasTerminationCode(doubleArrayIndex)) {
+                    nextObject = pattern.substring(0, patternIndex);
                     return true;
-
-                } else {
-                    // 繰り返す
-                    // TODO どこで retrieve を呼べばいいのか、確認する
                 }
             }
-            
+
             return false;
-            /*
-             * if (currentIndex >= pattern.length()) { return false; }
-             * 
-             * // コードから文字に逆変換する char ch =
-             * charTable[pattern.charAt(currentIndex)]; if (ch == '\uffff') {
-             * currentIndex = pattern.length(); return false; }
-             * 
-             * // TODO このあたりの実装が適当。なので、後で見直すこと currentIndex++; if
-             * (doubleArray.hasTerminationCode(ch)) { nextObject =
-             * pattern.substring(0, currentIndex); return true; } else { // 繰り返す
-             * }
-             */
+        }
+        
+        private void prepareFinish() {
+            patternIndex = pattern.length();
         }
 
         @Override
