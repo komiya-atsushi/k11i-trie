@@ -118,6 +118,10 @@ public class ListTrie implements Trie {
         Iterator<TrieNode> iterateChildren() {
             return children.iterator();
         }
+        
+        char getCharacter() {
+            return ch;
+        }
     }
 
     /** この Trie におけるルートノード */
@@ -180,7 +184,7 @@ public class ListTrie implements Trie {
         return new IterableImpl(text) {
 
             @Override
-            Iterator<String> createIterator(TrieNode root, CharSequence text) {
+            Iterator<String> createIterator(TrieNode root, String text) {
                 return new SearchPrefixOfIterator(root, text);
             }
         };
@@ -195,9 +199,9 @@ public class ListTrie implements Trie {
      * @author komiya
      */
     private abstract class IterableImpl implements Iterable<String> {
-        private CharSequence text;
+        private String text;
 
-        IterableImpl(CharSequence text) {
+        IterableImpl(String text) {
             this.text = text;
         }
 
@@ -216,7 +220,7 @@ public class ListTrie implements Trie {
          * @return
          */
         abstract Iterator<String> createIterator(TrieNode root,
-                CharSequence text);
+                String text);
     }
 
     /**
@@ -288,8 +292,13 @@ public class ListTrie implements Trie {
 
     @Override
     public Iterable<String> searchPredictive(String prefix) {
-        throw new UnsupportedOperationException(
-                "This method is not implemented.");
+        return new IterableImpl(prefix) {
+            
+            @Override
+            Iterator<String> createIterator(TrieNode root, String text) {
+                return new PredictiveSearcher(root, text);
+            }
+        };
     }
 
     private static class PredictiveSearcher implements Iterator<String> {
@@ -299,7 +308,9 @@ public class ListTrie implements Trie {
 
         private boolean prepared;
 
-        private Stack<Iterator<TrieNode>> nodes;
+        private Stack<Iterator<TrieNode>> nodes = new Stack<Iterator<TrieNode>>();;
+        
+        private Stack<Character> chars = new Stack<Character>();
 
         private String nextObject;
 
@@ -317,7 +328,6 @@ public class ListTrie implements Trie {
             }
 
             prepared = true;
-            nodes = new Stack<Iterator<TrieNode>>();
             
             TrieNode node = findExactMatch(root, pattern);
             if (node == null) {
@@ -329,7 +339,6 @@ public class ListTrie implements Trie {
         
         @Override
         public boolean hasNext() {
-            // TODO ここの実装は不完全
             if (nextObject != null) {
                 return true;
             }
@@ -337,16 +346,23 @@ public class ListTrie implements Trie {
             while (!nodes.isEmpty()) {
                 Iterator<TrieNode> iter = nodes.pop();
                 if (!iter.hasNext()) {
+                    chars.pop();
                     continue;
                 }
                 
                 TrieNode n = iter.next();
                 nodes.push(iter);
                 nodes.push(n.iterateChildren());
+                chars.push(n.getCharacter());
                 
                 if (n.hasTermination()) {
-                    // TODO 文字列を生成する
-                    // nextObject = hoge;
+                    StringBuilder sb = new StringBuilder(pattern);
+                    
+                    for (int i = 1; i < chars.size(); i++) {
+                        sb.append(chars.get(i));
+                    }
+                    nextObject = sb.toString();
+                    
                     return true;
                 }
             }
