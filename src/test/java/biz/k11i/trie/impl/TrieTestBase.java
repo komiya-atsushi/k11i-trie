@@ -4,7 +4,9 @@
 package biz.k11i.trie.impl;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -145,5 +147,130 @@ public abstract class TrieTestBase {
         Assert.assertFalse(trie.contains("bc"));
         Assert.assertFalse(trie.contains("cd"));
         Assert.assertFalse(trie.contains("de"));
+    }
+
+    /**
+     * Trie に含まれる語句と同一の語句が、searchPrefixOf() の検索対象語句として指定された場合の 動作を確認します。
+     */
+    @Test
+    public void testSearchPrefixOf1() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("a");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("a");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("a", iter.next());
+
+        Assert.assertFalse(iter.hasNext());
+    }
+
+    /**
+     * Trie に含まれない語句が searchPrefixOf() の検索対象語句として指定された場合の 動作を確認します。
+     */
+    @Test
+    public void testSearchPrefixOf2() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("b");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("a");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertFalse(iter.hasNext());
+    }
+
+    /**
+     * Trie に含まれない語句が searchPrefixOf() の検索対象語句として指定された場合の 動作を確認します。
+     */
+    @Test
+    public void testSearchPrefixOf3() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("ab");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("a");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertFalse(iter.hasNext());
+    }
+
+    /**
+     * Trie に含まれない語句が searchPrefixOf() の検索対象語句として指定された場合の動作を確認します。
+     * (Iterator#next() の呼び出しによる例外の発生を確認する)
+     */
+    @Test(expected = NoSuchElementException.class)
+    public void testSearchPrefixOf3_2() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("ab");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("a");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        // 以下を実行すると、例外が発生するはず
+        iter.next();
+    }
+
+    @Test
+    public void testSearchPrefixOf4() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("a", "abcde", "abc");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("abcdef");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("a", iter.next());
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("abc", iter.next());
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("abcde", iter.next());
+
+        Assert.assertFalse(iter.hasNext());
+    }
+
+    @Test
+    public void testSearchPrefixOf5() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("a", "abcde", "bcde", "bcd");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("abcd");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("a", iter.next());
+
+        Assert.assertFalse(iter.hasNext());
     }
 }
