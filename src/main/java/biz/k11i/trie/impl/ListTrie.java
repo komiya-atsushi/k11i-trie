@@ -334,17 +334,22 @@ public class ListTrie implements Trie {
                 return true;
             }
 
-            if (nodes.isEmpty()) {
-                return false;
+            while (!nodes.isEmpty()) {
+                Iterator<TrieNode> iter = nodes.pop();
+                if (!iter.hasNext()) {
+                    continue;
+                }
+                
+                TrieNode n = iter.next();
+                nodes.push(iter);
+                nodes.push(n.iterateChildren());
+                
+                if (n.hasTermination()) {
+                    // TODO ï∂éöóÒÇê∂ê¨Ç∑ÇÈ
+                    // nextObject = hoge;
+                    return true;
+                }
             }
-            
-            
-            Iterator<TrieNode> iter = null;
-            do {
-                iter = nodes.pop();
-            } while (!iter.hasNext() && !nodes.isEmpty());
-            
-            
             
             return false;
         }
@@ -358,7 +363,7 @@ public class ListTrie implements Trie {
             String result = nextObject;
             nextObject = null;
             
-            return nextObject;
+            return result;
         }
 
         @Override
