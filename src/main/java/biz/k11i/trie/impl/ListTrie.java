@@ -114,11 +114,11 @@ public class ListTrie implements Trie {
 
             return true;
         }
-        
+
         Iterator<TrieNode> iterateChildren() {
             return children.iterator();
         }
-        
+
         char getCharacter() {
             return ch;
         }
@@ -219,8 +219,7 @@ public class ListTrie implements Trie {
          *            探索対象の文字列
          * @return
          */
-        abstract Iterator<String> createIterator(TrieNode root,
-                String text);
+        abstract Iterator<String> createIterator(TrieNode root, String text);
     }
 
     /**
@@ -293,7 +292,7 @@ public class ListTrie implements Trie {
     @Override
     public Iterable<String> searchPredictive(String prefix) {
         return new IterableImpl(prefix) {
-            
+
             @Override
             Iterator<String> createIterator(TrieNode root, String text) {
                 return new PredictiveSearcher(root, text);
@@ -309,7 +308,7 @@ public class ListTrie implements Trie {
         private boolean prepared;
 
         private Stack<Iterator<TrieNode>> nodes = new Stack<Iterator<TrieNode>>();;
-        
+
         private Stack<Character> chars = new Stack<Character>();
 
         private String nextObject;
@@ -323,25 +322,28 @@ public class ListTrie implements Trie {
          * 候補探索を始めるための準備を行います。
          */
         private void prepare() {
-            if (!prepared) {
+            if (prepared) {
                 return;
             }
 
             prepared = true;
-            
+
             TrieNode node = findExactMatch(root, pattern);
             if (node == null) {
                 return;
             }
 
-            nodes.push(node.iterateChildren());
+            nodes.push(Collections.singleton(node).iterator());
+            chars.push('\uffff'); // ダミー値
         }
-        
+
         @Override
         public boolean hasNext() {
             if (nextObject != null) {
                 return true;
             }
+
+            prepare();
 
             while (!nodes.isEmpty()) {
                 Iterator<TrieNode> iter = nodes.pop();
@@ -349,24 +351,24 @@ public class ListTrie implements Trie {
                     chars.pop();
                     continue;
                 }
-                
+
                 TrieNode n = iter.next();
                 nodes.push(iter);
                 nodes.push(n.iterateChildren());
                 chars.push(n.getCharacter());
-                
+
                 if (n.hasTermination()) {
                     StringBuilder sb = new StringBuilder(pattern);
-                    
-                    for (int i = 1; i < chars.size(); i++) {
+
+                    for (int i = 2; i < chars.size(); i++) {
                         sb.append(chars.get(i));
                     }
                     nextObject = sb.toString();
-                    
+
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -375,10 +377,10 @@ public class ListTrie implements Trie {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            
+
             String result = nextObject;
             nextObject = null;
-            
+
             return result;
         }
 
