@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.Stack;
 
 import biz.k11i.trie.Trie;
 
@@ -156,7 +157,7 @@ public class DoubleArrayTrie implements Trie {
          * 
          * @param index
          * @param code
-         * @return code に対応する枝が存在しない場合は、負数が返却されます。
+         * @return code に対応する次のインデクス。code に対応する枝が存在しない場合は、負数が返却されます。
          */
         int retrieve(int index, char code) {
             if (!isIndexInRange(index)) {
@@ -385,6 +386,9 @@ public class DoubleArrayTrie implements Trie {
 
     /** UTF-16 文字から Double Array 内部における文字表現（コード）へ変換するためのテーブル */
     private char[] codeTable;
+
+    /** 利用されている文字数 */
+    private int numUsedChars;
 
     @Override
     public void build(Iterable<String> patterns) {
@@ -615,14 +619,14 @@ public class DoubleArrayTrie implements Trie {
                 char code = codeTable[pattern.charAt(patternIndex)];
                 if (code == Character.MAX_VALUE) {
                     // TODO Character.MAX_VALUE を別の定数に置き換えたい。
-                    prepareFinish();
+                    finish();
                     break;
                 }
 
                 // Double Array の走査位置を更新する
                 doubleArrayIndex = doubleArray.retrieve(doubleArrayIndex, code);
                 if (doubleArrayIndex < 0) {
-                    prepareFinish();
+                    finish();
                     break;
                 }
 
@@ -636,7 +640,7 @@ public class DoubleArrayTrie implements Trie {
             return false;
         }
 
-        private void prepareFinish() {
+        private void finish() {
             patternIndex = pattern.length();
         }
 
@@ -654,9 +658,128 @@ public class DoubleArrayTrie implements Trie {
 
         @Override
         public void remove() {
-            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException();
+        }
+    }
+    
+    private static class DoubleArrayNode {
+        private int index;
+        
+        private char code;
+        
+        DoubleArrayNode(int index, char code) {
+            this.index = index;
+            this.code = code;
+        }
+    }
+    
+    private class NodeIterator implements Iterator<DoubleArrayNode> {
+        private int parentIndex;
 
+        private char currentCode;
+
+        private DoubleArrayNode nextObject;
+
+        NodeIterator(int parentIndex) {
+            this.parentIndex = parentIndex;
         }
 
+        @Override
+        public boolean hasNext() {
+            if (nextObject != null) {
+                return true;
+            }
+
+//            int childIndex = -1;
+//            while (currentCode < numUsedChars
+//                    && (childIndex = doubleArray.retrieve(parentIndex,
+//                            currentCode)) < 0) {
+//                currentCode++;
+//            }
+//
+//            if (childIndex >= 0) {
+//
+//            }
+            
+            return false;
+        }
+
+        @Override
+        public DoubleArrayNode next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            DoubleArrayNode result = nextObject;
+            nextObject = null;
+
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            throw new NoSuchElementException();
+        }
+    }
+
+    private class PredictiveSearcher implements Iterator<String> {
+        private String pattern;
+
+        private Stack<Iterator<Integer>> indexes = new Stack<Iterator<Integer>>();
+
+        private Stack<Character> chars = new Stack<Character>();
+
+        private String nextObject;
+
+        PredictiveSearcher(String pattern) {
+            this.pattern = pattern;
+        }
+
+        private void prepare() {
+            // exact match をここで実施する
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (nextObject != null) {
+                return true;
+            }
+
+            prepare();
+
+            while (!indexes.isEmpty()) {
+                Iterator<Integer> iter = indexes.pop();
+                if (!iter.hasNext()) {
+                    chars.pop();
+                    continue;
+                }
+
+                Integer index = iter.next();
+                indexes.push(iter);
+
+                // TODO ここで文字終端のチェックをする
+                // Iterator<Integer> childrenIter = ;
+
+            }
+
+            return false;
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+
+            String result = nextObject;
+            nextObject = null;
+
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

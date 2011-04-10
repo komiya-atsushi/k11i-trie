@@ -295,26 +295,23 @@ public class ListTrie implements Trie {
 
             @Override
             Iterator<String> createIterator(TrieNode root, String text) {
-                return new PredictiveSearcher(root, text);
+                return new PredictiveSearcher(text);
             }
         };
     }
 
-    private static class PredictiveSearcher implements Iterator<String> {
-        private TrieNode root;
-
+    private class PredictiveSearcher implements Iterator<String> {
         private String pattern;
 
         private boolean prepared;
 
-        private Stack<Iterator<TrieNode>> nodes = new Stack<Iterator<TrieNode>>();;
+        private Stack<Iterator<TrieNode>> nodes = new Stack<Iterator<TrieNode>>();
 
         private Stack<Character> chars = new Stack<Character>();
 
         private String nextObject;
 
-        PredictiveSearcher(TrieNode root, String pattern) {
-            this.root = root;
+        PredictiveSearcher(String pattern) {
             this.pattern = pattern;
         }
 
@@ -386,9 +383,7 @@ public class ListTrie implements Trie {
 
         @Override
         public void remove() {
-            // TODO Auto-generated method stub
-
+            throw new UnsupportedOperationException();
         }
-
     }
 }

@@ -1,8 +1,5 @@
 package biz.k11i.trie;
 
-/*
- * AC マシン向けの Trie はどうあるべきか？
- */
 /**
  * 文字列を保持する Trie です。
  * <p>
@@ -61,14 +58,6 @@ public interface Trie {
      * @return
      */
     boolean contains(String pattern);
-
-    /**
-     * 指定された文字列と等しい文字列を、この Trie より削除します。
-     * 
-     * @param pattern
-     *            この Trie より削除する文字列
-     */
-    // void remove(S pattern);
 
     /**
      * 指定されたテキストの接頭辞に一致する、Trie の中のすべての文字列を列挙します。
