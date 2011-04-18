@@ -4,9 +4,13 @@
 package biz.k11i.trie.impl;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -272,5 +276,57 @@ public abstract class TrieTestBase {
         Assert.assertEquals("a", iter.next());
 
         Assert.assertFalse(iter.hasNext());
+    }
+
+    @Test
+    public void testSearchPrefixOf6() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("a", "abcde", "bcde", "bcd");
+        trie.build(patterns);
+
+        Iterable<String> prefixes = trie.searchPrefixOf("bcdfg");
+        Assert.assertNotNull(prefixes);
+
+        Iterator<String> iter = prefixes.iterator();
+        Assert.assertNotNull(iter);
+
+        Assert.assertTrue(iter.hasNext());
+        Assert.assertEquals("bcd", iter.next());
+
+        Assert.assertFalse(iter.hasNext());
+    }
+    
+    private static final Integer ONE = 1;
+
+    @Test
+    public void testSearchPredictive1() {
+        Trie trie = create();
+
+        List<String> patterns = Arrays.asList("abracadabra", "bracadabra",
+                "racadabra", "acadabra", "adabra", "abra", "bra", "ra", "a");
+
+        String key = "a";
+        Iterable<String> predictor = trie.searchPredictive(key);
+
+        Set<String> expected = collectByPrefix(patterns, key);
+        for (String predicted : predictor) {
+            if (!expected.remove(predicted)) {
+                //Assert.assert
+                Assert.fail(predicted + " ÇÕë∂ç›Ç∑Ç◊Ç´Ç≈Ç»Ç¢");
+            }
+        }
+    }
+    
+    private Set<String> collectByPrefix(Iterable<String> patterns, String prefix) {
+        Set<String> result = new HashSet<String>();
+        
+        for (String pattern : patterns) {
+            if (pattern.startsWith(prefix)) {
+                result.add(prefix);
+            }
+        }
+        
+        return result;
     }
 }
