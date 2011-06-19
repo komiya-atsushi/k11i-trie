@@ -52,7 +52,7 @@ public interface Trie {
     void add(String pattern);
 
     /**
-     * 指定された文字列が、この Trie に含まれる場合に true を返却します。
+     * 指定された文字列がこの Trie に含まれる場合に、true を返却します。
      * 
      * @param pattern
      * @return
@@ -76,4 +76,14 @@ public interface Trie {
      * @return
      */
     Iterable<String> searchPredictive(String prefix);
+
+    /**
+     * 指定された文字列に類似する文字列を返却します。
+     * 
+     * @param pattern
+     * @param editDistance
+     *            許容される最大の編集距離
+     * @return TODO String と編集距離の組み合わせを返却するようにする
+     */
+    //Iterable<String> searchApproximate(String pattern, int editDistance);
 }
